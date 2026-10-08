@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create account | Study Planner</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/script.js" defer></script>
+</head>
+<body class="auth-page">
+  <main class="auth-card">
+    <a class="brand" href="/login.html">Study Planner</a>
+    <h1>Create your account</h1>
+    <p class="muted">A little progress every day adds up.</p>
+    <form id="register-form">
+      <label>Name<input name="name" autocomplete="name" required></label>
+      <label>Email<input name="email" type="email" autocomplete="email" required></label>
+      <label>Password<input name="password" type="password" minlength="6" autocomplete="new-password" required></label>
+      <button type="submit">Create account</button>
+      <p class="form-message" id="form-message" role="status"></p>
+    </form>
+    <p class="switch-link">Already have an account? <a href="/login.html">Sign in</a></p>
+  </main>
+</body>
+</html>

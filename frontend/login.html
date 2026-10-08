@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in | Study Planner</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/script.js" defer></script>
+</head>
+<body class="auth-page">
+  <main class="auth-card">
+    <a class="brand" href="/login.html">Study Planner</a>
+    <h1>Welcome back</h1>
+    <p class="muted">Sign in to continue with your study plan.</p>
+    <form id="login-form">
+      <label>Email<input name="email" type="email" autocomplete="email" required></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+      <button type="submit">Sign in</button>
+      <p class="form-message" id="form-message" role="status"></p>
+    </form>
+    <p class="switch-link">New here? <a href="/register.html">Create an account</a></p>
+  </main>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My tasks | Study Planner</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/script.js" defer></script>
+</head>
+<body data-page="tasks">
+  <header class="topbar">
+    <a class="brand" href="/dashboard.html">Study Planner</a>
+    <nav><a href="/dashboard.html">Dashboard</a><a class="active" href="/tasks.html">My tasks</a><button class="link-button" data-logout>Log out</button></nav>
+  </header>
+  <main class="page">
+    <section class="page-heading">
+      <div><p class="eyebrow">YOUR SCHEDULE</p><h1>Study tasks</h1><p class="muted">Add a session, then mark it complete when you're done.</p></div>
+    </section>
+    <section class="panel">
+      <div class="section-heading"><div><h2 id="task-form-title">Add a task</h2><p class="muted">Plan a focused block of study time.</p></div></div>
+      <form id="task-form" class="task-form">
+        <label>Task title<input name="title" placeholder="Learn Go" required></label>
+        <label>Subject<input name="subject" placeholder="Backend" required></label>
+        <label class="wide">Description<textarea name="description" rows="2" placeholder="What do you want to study?"></textarea></label>
+        <label>Date<input name="date" type="date" required></label>
+        <label>Start time<input name="startTime" type="time" required></label>
+        <label>End time<input name="endTime" type="time" required></label>
+        <label>Status<select name="status"><option>Pending</option><option>Completed</option></select></label>
+        <div class="form-actions wide"><button id="save-task" type="submit">Add task</button><button id="cancel-edit" class="secondary-button hidden" type="button">Cancel edit</button><p class="form-message" id="task-message" role="status"></p></div>
+      </form>
+    </section>
+    <section class="panel task-list-panel">
+      <div class="section-heading"><div><h2>Your tasks</h2><p class="muted">Only you can see and manage these tasks.</p></div></div>
+      <div id="task-list" class="task-list"></div>
+    </section>
+  </main>
+</body>
+</html>
