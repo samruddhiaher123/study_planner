@@ -19,11 +19,31 @@ type registerRequest struct {
 	Password string `json:"password"`
 }
 
+type registerResponse struct {
+	Message string `json:"message"`
+}
+
 type loginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+type loginResponse struct {
+	Message string `json:"message"`
+	Token   string `json:"token"`
+}
+
+// Register creates an account.
+// @Summary Register a user
+// @Description Creates an account with a name, email address, and password.
+// @Tags authentication
+// @Accept json
+// @Produce json
+// @Param request body registerRequest true "Registration details"
+// @Success 201 {object} registerResponse
+// @Failure 400 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Router /api/register [post]
 func Register(w http.ResponseWriter, r *http.Request) {
 	var input registerRequest
 	if !DecodeJSON(w, r, &input) {
@@ -58,9 +78,21 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	JSONResponse(w, http.StatusCreated, map[string]string{"message": "Registration successful"})
+	JSONResponse(w, http.StatusCreated, registerResponse{Message: "Registration successful"})
 }
 
+// Login authenticates a user and returns a JWT.
+// @Summary Log in
+// @Description Authenticates a user and returns a JWT for protected endpoints.
+// @Tags authentication
+// @Accept json
+// @Produce json
+// @Param request body loginRequest true "Login credentials"
+// @Success 200 {object} loginResponse
+// @Failure 400 {object} errorResponse
+// @Failure 401 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Router /api/login [post]
 func Login(w http.ResponseWriter, r *http.Request) {
 	var input loginRequest
 	if !DecodeJSON(w, r, &input) {
@@ -88,8 +120,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		JSONError(w, http.StatusInternalServerError, "Could not generate token")
 		return
 	}
-	JSONResponse(w, http.StatusOK, map[string]string{
-		"message": "Login successful",
-		"token":   token,
+	JSONResponse(w, http.StatusOK, loginResponse{
+		Message: "Login successful",
+		Token:   token,
 	})
 }

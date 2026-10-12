@@ -1,0 +1,516 @@
+basePath: /
+definitions:
+  handlers.DashboardResponse:
+    properties:
+      completed:
+        type: integer
+      currentStreak:
+        type: integer
+      inProgress:
+        type: integer
+      lastStudyDate:
+        type: string
+      longestStreak:
+        type: integer
+      notStarted:
+        type: integer
+      onHold:
+        type: integer
+      pending:
+        type: integer
+      previousWeekAvailable:
+        type: boolean
+      previousWeekProgress:
+        type: integer
+      studyMinutes:
+        type: integer
+      todayCompleted:
+        type: integer
+      todayDate:
+        type: string
+      todayPlanned:
+        type: integer
+      todayProgress:
+        type: integer
+      todayRemaining:
+        type: integer
+      totalTasks:
+        type: integer
+      week:
+        items:
+          $ref: '#/definitions/handlers.DayProgress'
+        type: array
+      weekChange:
+        type: integer
+      weeklyProgress:
+        type: integer
+    type: object
+  handlers.DayProgress:
+    properties:
+      completed:
+        type: integer
+      date:
+        type: string
+      day:
+        type: string
+      progress:
+        type: integer
+      studyMinutes:
+        type: integer
+      total:
+        type: integer
+    type: object
+  handlers.errorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  handlers.loginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  handlers.loginResponse:
+    properties:
+      message:
+        type: string
+      token:
+        type: string
+    type: object
+  handlers.messageResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handlers.registerRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  handlers.registerResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handlers.taskRequest:
+    properties:
+      actualStudyMinutes:
+        maximum: 1440
+        minimum: 0
+        type: integer
+      date:
+        type: string
+      description:
+        type: string
+      endTime:
+        type: string
+      priority:
+        enum:
+        - High
+        - Medium
+        - Low
+        type: string
+      startTime:
+        type: string
+      status:
+        enum:
+        - Not Started
+        - In Progress
+        - Completed
+        - On Hold
+        type: string
+      subject:
+        type: string
+      title:
+        type: string
+    type: object
+  models.Task:
+    properties:
+      actualStudyMinutes:
+        type: integer
+      completedAt:
+        type: string
+      createdAt:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      endTime:
+        type: string
+      id:
+        type: integer
+      priority:
+        enum:
+        - High
+        - Medium
+        - Low
+        type: string
+      startTime:
+        type: string
+      status:
+        enum:
+        - Not Started
+        - In Progress
+        - Completed
+        - On Hold
+        type: string
+      subject:
+        type: string
+      title:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for managing study sessions and tasks
+  title: Study Planner API
+  version: "1.0"
+paths:
+  /api/dashboard:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.DashboardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get dashboard
+      tags:
+      - dashboard
+  /api/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a JWT for protected endpoints.
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.loginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      summary: Log in
+      tags:
+      - authentication
+  /api/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates an account with a name, email address, and password.
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.registerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.registerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      summary: Register a user
+      tags:
+      - authentication
+  /api/tasks:
+    get:
+      parameters:
+      - description: Search task titles and descriptions
+        in: query
+        name: q
+        type: string
+      - description: Filter by exact subject
+        in: query
+        name: subject
+        type: string
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - description: Filter by priority
+        in: query
+        name: priority
+        type: string
+      - description: Filter by scheduled date (YYYY-MM-DD)
+        in: query
+        name: date
+        type: string
+      - description: Start of scheduled date range (YYYY-MM-DD)
+        in: query
+        name: from
+        type: string
+      - description: End of scheduled date range (YYYY-MM-DD)
+        in: query
+        name: to
+        type: string
+      - description: 'Task view: pending, completed, overdue, or upcoming'
+        in: query
+        name: view
+        type: string
+      - description: 'Sort: default, priority, dueDate, newest, oldest, or status'
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Task'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: List tasks
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Task details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.taskRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Task'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a task
+      tags:
+      - tasks
+  /api/tasks/{id}:
+    delete:
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.messageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a task
+      tags:
+      - tasks
+    get:
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Task'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a task
+      tags:
+      - tasks
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated task details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.taskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Task'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a task
+      tags:
+      - tasks
+  /api/tasks/{id}/complete:
+    put:
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.messageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.errorResponse'
+      security:
+      - BearerAuth: []
+      summary: Complete a task
+      tags:
+      - tasks
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -2,18 +2,33 @@ package config
 
 import (
 	"fmt"
+	"os"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 func Connect() (*gorm.DB, error) {
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	name := os.Getenv("DB_NAME")
 
-	user := "devadmin"
-	password := "MySecurePassword123!" // Replace with the password you set for devadmin
-	host := "localhost"
-	port := "3306"
-	name := "study_planner"
+	for _, variable := range []struct {
+		name  string
+		value string
+	}{
+		{name: "DB_USER", value: user},
+		{name: "DB_PASSWORD", value: password},
+		{name: "DB_HOST", value: host},
+		{name: "DB_PORT", value: port},
+		{name: "DB_NAME", value: name},
+	} {
+		if variable.value == "" {
+			return nil, fmt.Errorf("%s is empty; set it in .env or the environment", variable.name)
+		}
+	}
 
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",

@@ -10,7 +10,7 @@
 <body data-page="dashboard">
   <header class="topbar">
     <a class="brand" href="/dashboard.html">Study Planner</a>
-    <nav><a class="active" href="/dashboard.html">Dashboard</a><a href="/tasks.html">My tasks</a><button class="link-button" data-logout>Log out</button></nav>
+    <nav><a class="active" href="/dashboard.html">Dashboard</a><a href="/tasks.html">My tasks</a><a href="/tasks.html#calendar">Calendar</a><button class="link-button" data-logout>Log out</button></nav>
   </header>
   <main class="page">
     <section class="page-heading">
@@ -20,17 +20,30 @@
     <section class="progress-panel">
       <div class="progress-copy"><span class="muted">Today's progress</span><strong id="today-progress">0%</strong></div>
       <div class="progress-track"><div id="today-progress-bar" class="progress-fill"></div></div>
+      <p id="today-breakdown" class="muted progress-breakdown">Loading today's study plan…</p>
     </section>
     <section class="stat-grid">
       <article class="stat-card"><span class="muted">Total tasks</span><strong id="total-tasks">0</strong><span class="stat-note">Across your study plan</span></article>
       <article class="stat-card"><span class="muted">Completed</span><strong id="completed-tasks">0</strong><span class="stat-note">Tasks finished</span></article>
       <article class="stat-card"><span class="muted">Pending</span><strong id="pending-tasks">0</strong><span class="stat-note">Still to work on</span></article>
-      <article class="stat-card"><span class="muted">Today's study time</span><strong id="study-time">0 min</strong><span class="stat-note">Scheduled for today</span></article>
+      <article class="stat-card"><span class="muted">Today's study time</span><strong id="study-time">0 min</strong><span class="stat-note">Recorded on completed tasks</span></article>
+      <article class="stat-card"><span class="muted">Not started</span><strong id="not-started-tasks">0</strong><span class="stat-note">Ready to begin</span></article>
+      <article class="stat-card"><span class="muted">In progress</span><strong id="in-progress-tasks">0</strong><span class="stat-note">Currently underway</span></article>
+      <article class="stat-card"><span class="muted">On hold</span><strong id="on-hold-tasks">0</strong><span class="stat-note">Paused for now</span></article>
+    </section>
+    <section class="panel streak-panel">
+      <div class="section-heading"><div><h2>Study streak</h2><p class="muted">A day counts when you complete at least one task.</p></div></div>
+      <div class="streak-stats">
+        <article><strong id="current-streak">0</strong><span class="muted">Current days</span></article>
+        <article><strong id="longest-streak">0</strong><span class="muted">Longest days</span></article>
+        <article><strong id="last-study-date">—</strong><span class="muted">Last study date</span></article>
+      </div>
     </section>
     <section class="panel">
-      <div class="section-heading"><div><h2>Weekly progress</h2><p class="muted">Completed study tasks this week</p></div></div>
+      <div class="section-heading"><div><h2>Weekly progress</h2><p class="muted">Completion and recorded study time, Monday to Sunday.</p></div><p id="weekly-comparison" class="muted"></p></div>
       <div id="weekly-chart" class="weekly-chart" aria-label="Weekly task completion progress"></div>
     </section>
+    <p id="dashboard-message" class="form-message" role="status"></p>
   </main>
 </body>
 </html>

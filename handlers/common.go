@@ -9,10 +9,14 @@ import (
 
 var DB *gorm.DB
 
+type errorResponse struct {
+	Error string `json:"error"`
+}
+
 func JSONError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{"error": message})
+	json.NewEncoder(w).Encode(errorResponse{Error: message})
 }
 
 func JSONResponse(w http.ResponseWriter, status int, value interface{}) {
