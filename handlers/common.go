@@ -2,10 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 
 	"gorm.io/gorm"
 )
+
+const maxJSONBodySize = 1 << 20
 
 var DB *gorm.DB
 
@@ -26,7 +30,23 @@ func JSONResponse(w http.ResponseWriter, status int, value interface{}) {
 }
 
 func DecodeJSON(w http.ResponseWriter, r *http.Request, value interface{}) bool {
-	if err := json.NewDecoder(r.Body).Decode(value); err != nil {
+	r.Body = http.MaxBytesReader(w, r.Body, maxJSONBodySize)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(value); err != nil {
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			JSONError(w, http.StatusRequestEntityTooLarge, "Request body too large")
+			return false
+		}
+		JSONError(w, http.StatusBadRequest, "Invalid JSON body")
+		return false
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			JSONError(w, http.StatusRequestEntityTooLarge, "Request body too large")
+			return false
+		}
 		JSONError(w, http.StatusBadRequest, "Invalid JSON body")
 		return false
 	}

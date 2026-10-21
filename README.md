@@ -1,87 +1,105 @@
 # Study Planner
 
-Study Planner is a full-stack study scheduling application built with Go, Gorilla Mux, MySQL/GORM, JWT, and a static HTML/CSS/JavaScript frontend.
-
-## Implemented features
-
-### Accounts and API
-- User registration and login with bcrypt password hashing
-- JWT-protected API routes
-- Per-user task ownership checks for list, read, update, delete, completion, and dashboard queries
-- Swagger UI at `/swagger/index.html`
-
-### Task planning
-- Create, list, view, update, delete, and complete study tasks
-- Task title, subject, description, scheduled date, start/end time, status, priority, and optional recorded study minutes
-- Statuses: Not Started, In Progress, Completed, and On Hold
-- Priorities: High, Medium, and Low
-- Existing `Pending` status requests are accepted as `Not Started`; the existing completion route remains available
-- Validated search, subject/status/priority filters, exact date and date-range filters, and active/completed/overdue/upcoming views
-- Server-side sort choices with a stable default order: active overdue tasks first, then priority, scheduled date, start time, and ID; completed tasks appear after active tasks
-- Optional subject grouping in the task list
-- Monthly calendar with month navigation and task editing from calendar entries
-
-### Dashboard and progress
-- Today's planned, completed, and remaining task counts and completion percentage
-- Total task and status counts
-- Recorded actual study minutes (optional minutes entered on a task; included after the task is completed)
-- Monday-to-Sunday task completion and study-time summary
-- Weekly completion percentage and previous-week comparison when prior-week tasks exist
-- Current and longest completion streak, plus the last study date
-
-Today's completion percentage is the number of tasks scheduled for the server's current local date whose status is Completed, divided by the number planned for that date; it is zero when no tasks are planned. The weekly chart counts task completion by scheduled date. Recorded study minutes are grouped by the local date of the persisted completion timestamp. The previous-week comparison is shown only when at least one task was scheduled in the previous week.
-
-Streaks are based on persisted completion history and the server's local calendar date (the same date returned by the API for overdue display). Completing at least one task on a local calendar day counts as a study day. The current streak continues through today or yesterday; a missed full day breaks it. New completions are stored independently of the current task status, so reopening or deleting a task does not erase its historical study day. Pre-existing completed rows without a timestamp are not assigned an invented date and therefore do not contribute to historical streaks.
-
-Actual study time is opt-in: task durations are not treated as actual study time. Enter the number of minutes studied on the task and mark it completed for those minutes to contribute to daily and weekly study-time totals.
+Study Planner is a full-stack study scheduling app built with Go, Gorilla Mux, PostgreSQL, GORM, JWT, bcrypt, and a static HTML/CSS/JavaScript frontend.
 
 ## Project structure
 
-- `main.go` - environment setup, GORM migration, Gorilla Mux routes, and static frontend serving
-- `config/` - MySQL connection setup
-- `handlers/` - authentication, task, and dashboard HTTP handlers
-- `middleware/` - JWT authentication middleware
-- `models/` - GORM user, task, and per-user study-completion history models
+- `main.go` - startup, migrations, routes, and static frontend serving
+- `config/` - PostgreSQL connection and safe GORM migrations
+- `handlers/` - authentication, task, dashboard, and JSON HTTP handlers
+- `middleware/` - JWT authentication
+- `models/` - GORM database models and API structures
 - `utils/` - JWT helpers
-- `frontend/` - login, registration, dashboard, task management, styles, and browser-side API calls
+- `frontend/` - static pages, styles, and browser-side API calls
 - `docs/` - generated Swagger/OpenAPI artifacts
 
-## Setup
+## Configure PostgreSQL
 
-1. Create a MySQL database.
-2. Set `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `JWT_SECRET` in your local `.env` or environment. Use your own credentials and a strong JWT secret; do not commit real secrets.
-3. Start the application:
+PostgreSQL should be running, and the `study_planner` database should exist. Create a regular application account rather than using the PostgreSQL superuser:
+
+```sql
+CREATE USER study_planner_app WITH PASSWORD 'choose_a_local_password';
+GRANT CONNECT ON DATABASE study_planner TO study_planner_app;
+```
+
+Connect to the `study_planner` database as its owner or administrator and grant schema access:
+
+```sql
+GRANT USAGE, CREATE ON SCHEMA public TO study_planner_app;
+```
+
+The application needs to create and update its own `users`, `tasks`, and `study_completions` tables. GORM `AutoMigrate` only adds missing columns/tables and does not drop existing columns or tables. Other existing relations (including `college` and `subjects`) are not migrated by this app. The role used at startup must own the existing `users` table (or an administrator must perform the initial migration), because PostgreSQL does not grant `ALTER TABLE` through ordinary table grants.
+
+After creating the app tables, an administrator can grant normal runtime access:
+
+```sql
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO study_planner_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO study_planner_app;
+```
+
+1. Copy `.env.example` to `.env`.
+2. Set `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SSLMODE`, and `JWT_SECRET`. Keep `.env` private and do not commit it.
+3. Start the server:
 
    ```bash
+   go mod tidy
    go run .
    ```
 
-4. Open the app at `http://localhost:8080/`. Swagger UI is available at `http://localhost:8080/swagger/index.html`.
+For a local PostgreSQL service on Ubuntu, check it with:
 
-The application uses GORM `AutoMigrate` to add the task priority, actual study minutes, completion timestamp, and study-completion history table without deleting task rows. Legacy `Pending` task statuses are migrated to `Not Started`; blank priorities are set to `Medium`. Existing completed records with a persisted completion timestamp are copied into completion history once on startup. For rows without a timestamp, the application preserves the task and does not fabricate a historical completion date.
+```bash
+sudo systemctl status postgresql
+pg_isready
+```
 
-## API overview
+Start it if needed with `sudo systemctl start postgresql`. Use the local PostgreSQL username/password you configured for `study_planner_app`; the application does not use or need the `postgres` superuser account.
 
-Public routes:
+Open `http://localhost:8080/`. Swagger UI is at `http://localhost:8080/swagger/index.html`.
+
+## Existing schema and data
+
+The app leaves unrelated tables and columns intact. Existing `users` columns such as `id`, `name`, `email`, and `age` are preserved; GORM adds the application fields it needs (including password and timestamps) without deleting `age`. Existing records are not overwritten.
+
+Rows in `users` that predate the password column will not have a usable password and cannot log in until a password is set through a deliberate account recovery process. The app does not invent passwords or assign one to existing users.
+
+Startup also converts legacy task status `Pending` to `Not Started`, sets blank priorities to `Medium`, and copies completed tasks with recorded completion timestamps into history if the matching history row does not exist. It does not invent completion timestamps.
+
+Before first startup against a database containing a `users` table, review that table's columns, primary key, email uniqueness, and existing email duplicates. If emails are duplicated, resolve them deliberately before the unique email index can be added; this application will not delete or merge user rows. Ensure the database account owns or has `USAGE` and `CREATE` privileges on the schema.
+
+## Features
+
+- Registration and login with bcrypt password hashing
+- JWT-protected API routes and per-user task ownership
+- Task create, list, view, update, delete, and completion
+- Task status, priority, search, filters, sorting, and date ranges
+- Monthly calendar and task editing
+- Daily dashboard and weekly completion/study-time summaries
+- Current and longest study streaks based on persisted completion history
+- Swagger UI and generated OpenAPI documentation
+
+Actual study time is opt-in. Planned task duration is never counted as actual study time. Historical streak dates come only from persisted completion timestamps.
+
+## API routes
+
+Public:
 
 - `POST /api/register`
 - `POST /api/login`
 
-JWT-protected routes:
+JWT-protected:
 
 - `GET|POST /api/tasks`
 - `GET|PUT|DELETE /api/tasks/{id}`
 - `PUT /api/tasks/{id}/complete`
 - `GET /api/dashboard`
 
-`GET /api/tasks` supports `q`, `subject`, `status`, `priority`, `date`, `from`, `to`, `view`, and `sort` query parameters. Swagger documents the task fields, filters, dashboard response, and authentication requirements.
+`GET /api/tasks` accepts `q`, `subject`, `status`, `priority`, `date`, `from`, `to`, `view`, and `sort`.
+
+## Swagger
 
 Regenerate Swagger artifacts after changing API annotations:
 
 ```bash
 go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g main.go -o docs
 ```
-
-## Future work
-
-Potential follow-up work includes password reset and email verification, reminders, recurring tasks, profile settings, production deployment/monitoring, rate limiting, and browser-to-database integration tests.

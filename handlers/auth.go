@@ -52,13 +52,14 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	input.Name = strings.TrimSpace(input.Name)
 	input.Email = strings.TrimSpace(strings.ToLower(input.Email))
-	if input.Name == "" || input.Email == "" || len(input.Password) < 6 || len(input.Password) > 72 {
+	if input.Name == "" || input.Email == "" || len([]rune(input.Name)) > 200 ||
+		len([]rune(input.Email)) > 320 || len(input.Password) < 6 || len(input.Password) > 72 {
 		JSONError(w, http.StatusBadRequest, "Name and email are required; password must be 6 to 72 characters")
 		return
 	}
 
 	var existing models.User
-	if err := DB.Where("email = ?", input.Email).First(&existing).Error; err == nil {
+	if err := DB.WithContext(r.Context()).Where("email = ?", input.Email).First(&existing).Error; err == nil {
 		JSONError(w, http.StatusBadRequest, "Email already exists")
 		return
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -73,7 +74,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := models.User{Name: input.Name, Email: input.Email, Password: string(hashedPassword)}
-	if err := DB.Create(&user).Error; err != nil {
+	if err := DB.WithContext(r.Context()).Create(&user).Error; err != nil {
 		JSONError(w, http.StatusInternalServerError, "Could not save user")
 		return
 	}
@@ -101,7 +102,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	input.Email = strings.TrimSpace(strings.ToLower(input.Email))
 
 	var user models.User
-	if err := DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
+	if err := DB.WithContext(r.Context()).
+		Select("id", "password").
+		Where("email = ?", input.Email).
+		First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			JSONError(w, http.StatusUnauthorized, "Invalid email or password")
 		} else {

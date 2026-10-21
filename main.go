@@ -17,7 +17,6 @@ import (
 	"study-planner/config"
 	"study-planner/handlers"
 	"study-planner/middleware"
-	"study-planner/models"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -42,39 +41,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer sqlDB.Close()
 
-	// Create database tables if needed
-	if err := db.AutoMigrate(&models.User{}, &models.Task{}, &models.StudyCompletion{}); err != nil {
+	if err := config.Migrate(db); err != nil {
 		log.Fatal(err)
-	}
-	if err := db.Model(&models.Task{}).
-		Where("status IS NULL OR status = ? OR status = ?", "", "Pending").
-		Update("status", "Not Started").Error; err != nil {
-		log.Fatal(err)
-	}
-	if err := db.Model(&models.Task{}).
-		Where("priority IS NULL OR priority = ?", "").
-		Update("priority", "Medium").Error; err != nil {
-		log.Fatal(err)
-	}
-	var legacyCompletions []models.Task
-	if err := db.Where(
-		"status = ? AND completed_at IS NOT NULL AND NOT EXISTS "+
-			"(SELECT 1 FROM study_completions WHERE study_completions.task_id = tasks.id "+
-			"AND study_completions.user_id = tasks.user_id AND study_completions.completed_at = tasks.completed_at)",
-		"Completed",
-	).Find(&legacyCompletions).Error; err != nil {
-		log.Fatal(err)
-	}
-	for _, task := range legacyCompletions {
-		if err := db.Create(&models.StudyCompletion{
-			UserID:             task.UserID,
-			TaskID:             task.ID,
-			ActualStudyMinutes: task.ActualStudyMinutes,
-			CompletedAt:        *task.CompletedAt,
-		}).Error; err != nil {
-			log.Fatal(err)
-		}
 	}
 
 	handlers.DB = db

@@ -16,4 +16,5 @@ type Task struct {
 	ActualStudyMinutes int        `gorm:"not null;default:0" json:"actualStudyMinutes"`
 	CompletedAt        *time.Time `json:"completedAt,omitempty"`
 	CreatedAt          time.Time  `json:"createdAt"`
+	User               User       `gorm:"foreignKey:UserID" json:"-"`
 }

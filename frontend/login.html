@@ -3,22 +3,38 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f6fb">
   <title>Sign in | Study Planner</title>
-  <link rel="stylesheet" href="/style.css">
-  <script src="/script.js" defer></script>
+  <link rel="stylesheet" href="/style.css?v=2">
+  <script type="module" src="/auth.js?v=2"></script>
 </head>
 <body class="auth-page">
   <main class="auth-card">
-    <a class="brand" href="/login.html">Study Planner</a>
-    <h1>Welcome back</h1>
-    <p class="muted">Sign in to continue with your study plan.</p>
-    <form id="login-form">
-      <label>Email<input name="email" type="email" autocomplete="email" required></label>
-      <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
-      <button type="submit">Sign in</button>
-      <p class="form-message" id="form-message" role="status"></p>
+    <a class="brand auth-brand" href="/login.html">
+      <span class="brand-mark" aria-hidden="true">S</span>
+      <span>Study Planner</span>
+    </a>
+    <div class="auth-heading">
+      <p class="eyebrow">YOUR STUDY SPACE</p>
+      <h1>Welcome back</h1>
+      <p class="muted">Sign in to pick up where you left off.</p>
+    </div>
+    <form id="login-form" novalidate>
+      <label for="login-email">Email</label>
+      <input id="login-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+
+      <label for="login-password">Password</label>
+      <div class="password-field">
+        <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+        <button class="password-toggle" type="button" data-toggle-password="login-password" aria-label="Show password" aria-pressed="false">
+          <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg class="eye-off-icon hidden" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a16.7 16.7 0 0 1-3.2 3.9M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7a10.8 10.8 0 0 0 3-.4"/></svg>
+        </button>
+      </div>
+      <button class="auth-submit" type="submit">Sign in</button>
+      <p class="form-message" id="form-message" role="alert" aria-live="polite"></p>
     </form>
-    <p class="switch-link">New here? <a href="/register.html">Create an account</a></p>
+    <p class="switch-link">New to Study Planner? <a href="/register.html">Create an account</a></p>
   </main>
 </body>
 </html>

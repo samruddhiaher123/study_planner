@@ -53,12 +53,12 @@ type DashboardResponse struct {
 func Dashboard(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserID(r)
 	var tasks []models.Task
-	if err := DB.Where("user_id = ?", userID).Find(&tasks).Error; err != nil {
+	if err := DB.WithContext(r.Context()).Where("user_id = ?", userID).Find(&tasks).Error; err != nil {
 		JSONError(w, http.StatusInternalServerError, "Could not load dashboard")
 		return
 	}
 	var completions []models.StudyCompletion
-	if err := DB.Where("user_id = ?", userID).Find(&completions).Error; err != nil {
+	if err := DB.WithContext(r.Context()).Where("user_id = ?", userID).Find(&completions).Error; err != nil {
 		JSONError(w, http.StatusInternalServerError, "Could not load study completion history")
 		return
 	}
