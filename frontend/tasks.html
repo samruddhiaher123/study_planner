@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My tasks | Study Planner</title>
   <link rel="stylesheet" href="/style.css">
-  <script type="module" src="/tasks.js"></script>
+  <script type="module" src="/tasks.js?v=2"></script>
 </head>
 <body data-page="tasks">
   <header class="topbar">
@@ -27,7 +27,6 @@
         <label>End time<input name="endTime" type="time" required></label>
         <label>Status<select name="status"><option>Not Started</option><option>In Progress</option><option>Completed</option><option>On Hold</option></select></label>
         <label>Priority<select name="priority"><option>Medium</option><option>High</option><option>Low</option></select></label>
-        <label>Actual study minutes<input name="actualStudyMinutes" type="number" min="0" max="1440" value="0"><span class="field-hint">Optional; used for actual study-time totals.</span></label>
         <div class="form-actions wide"><button id="save-task" type="submit">Add task</button><button id="cancel-edit" class="secondary-button hidden" type="button">Cancel edit</button><p class="form-message" id="task-message" role="status"></p></div>
       </form>
     </section>

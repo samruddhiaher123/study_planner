@@ -1,4 +1,4 @@
-import { formatStudyTime, request, requireLogin, showMessage } from "./common.js";
+import { request, requireLogin, showMessage } from "./common.js";
 
 async function loadDashboard() {
   requireLogin();
@@ -15,7 +15,6 @@ async function loadDashboard() {
     document.querySelector("#not-started-tasks").textContent = dashboard.notStarted;
     document.querySelector("#in-progress-tasks").textContent = dashboard.inProgress;
     document.querySelector("#on-hold-tasks").textContent = dashboard.onHold;
-    document.querySelector("#study-time").textContent = formatStudyTime(dashboard.studyMinutes);
     document.querySelector("#current-streak").textContent = dashboard.currentStreak;
     document.querySelector("#longest-streak").textContent = dashboard.longestStreak;
     document.querySelector("#last-study-date").textContent = dashboard.lastStudyDate || "—";
@@ -30,18 +29,15 @@ async function loadDashboard() {
       item.className = "chart-day";
       const track = document.createElement("div");
       track.className = "chart-track";
-      track.title = `${day.completed} of ${day.total} tasks completed · ${formatStudyTime(day.studyMinutes)} recorded`;
+      track.title = `${day.completed} of ${day.total} tasks completed`;
       const bar = document.createElement("div");
       bar.className = "chart-bar";
       bar.style.height = `${day.progress}%`;
       track.append(bar);
-      const details = document.createElement("span");
-      details.className = "chart-details";
-      details.textContent = formatStudyTime(day.studyMinutes);
       const label = document.createElement("span");
       label.className = "chart-label";
       label.textContent = day.day.slice(0, 3);
-      item.append(track, details, label);
+      item.append(track, label);
       chart.append(item);
     });
   } catch (error) {

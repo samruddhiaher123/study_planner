@@ -1,17 +1,13 @@
-package handlers
+package utils
 
 import (
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
-
-	"gorm.io/gorm"
 )
 
 const maxJSONBodySize = 1 << 20
-
-var DB *gorm.DB
 
 type errorResponse struct {
 	Error string `json:"error"`
@@ -20,13 +16,13 @@ type errorResponse struct {
 func JSONError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(errorResponse{Error: message})
+	_ = json.NewEncoder(w).Encode(errorResponse{Error: message})
 }
 
 func JSONResponse(w http.ResponseWriter, status int, value interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(value)
+	_ = json.NewEncoder(w).Encode(value)
 }
 
 func DecodeJSON(w http.ResponseWriter, r *http.Request, value interface{}) bool {

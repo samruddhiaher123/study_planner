@@ -32,14 +32,6 @@ export function requireLogin() {
   if (!token()) window.location.href = "/login.html";
 }
 
-export function formatStudyTime(minutes) {
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  if (hours === 0) return `${remainingMinutes} min`;
-  if (remainingMinutes === 0) return `${hours} hr`;
-  return `${hours} hr ${remainingMinutes} min`;
-}
-
 document.querySelectorAll("[data-logout]").forEach((button) => {
   button.addEventListener("click", () => {
     localStorage.removeItem("studyPlannerToken");

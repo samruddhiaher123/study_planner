@@ -1,6 +1,6 @@
 basePath: /
 definitions:
-  handlers.DashboardResponse:
+  controllers.DashboardResponse:
     properties:
       completed:
         type: integer
@@ -22,8 +22,6 @@ definitions:
         type: boolean
       previousWeekProgress:
         type: integer
-      studyMinutes:
-        type: integer
       todayCompleted:
         type: integer
       todayDate:
@@ -38,53 +36,38 @@ definitions:
         type: integer
       week:
         items:
-          $ref: '#/definitions/handlers.DayProgress'
+          $ref: '#/definitions/models.DayProgress'
         type: array
       weekChange:
         type: integer
       weeklyProgress:
         type: integer
     type: object
-  handlers.DayProgress:
-    properties:
-      completed:
-        type: integer
-      date:
-        type: string
-      day:
-        type: string
-      progress:
-        type: integer
-      studyMinutes:
-        type: integer
-      total:
-        type: integer
-    type: object
-  handlers.errorResponse:
+  controllers.errorResponse:
     properties:
       error:
         type: string
     type: object
-  handlers.loginRequest:
+  controllers.loginRequest:
     properties:
       email:
         type: string
       password:
         type: string
     type: object
-  handlers.loginResponse:
+  controllers.loginResponse:
     properties:
       message:
         type: string
       token:
         type: string
     type: object
-  handlers.messageResponse:
+  controllers.messageResponse:
     properties:
       message:
         type: string
     type: object
-  handlers.registerRequest:
+  controllers.registerRequest:
     properties:
       email:
         type: string
@@ -93,17 +76,13 @@ definitions:
       password:
         type: string
     type: object
-  handlers.registerResponse:
+  controllers.registerResponse:
     properties:
       message:
         type: string
     type: object
-  handlers.taskRequest:
+  controllers.taskRequest:
     properties:
-      actualStudyMinutes:
-        maximum: 1440
-        minimum: 0
-        type: integer
       date:
         type: string
       description:
@@ -130,10 +109,21 @@ definitions:
       title:
         type: string
     type: object
+  models.DayProgress:
+    properties:
+      completed:
+        type: integer
+      date:
+        type: string
+      day:
+        type: string
+      progress:
+        type: integer
+      total:
+        type: integer
+    type: object
   models.Task:
     properties:
-      actualStudyMinutes:
-        type: integer
       completedAt:
         type: string
       createdAt:
@@ -181,15 +171,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.DashboardResponse'
+            $ref: '#/definitions/controllers.DashboardResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
       security:
       - BearerAuth: []
       summary: Get dashboard
@@ -206,26 +196,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handlers.loginRequest'
+          $ref: '#/definitions/controllers.loginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.loginResponse'
+            $ref: '#/definitions/controllers.loginResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
       summary: Log in
       tags:
       - authentication
@@ -240,22 +230,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handlers.registerRequest'
+          $ref: '#/definitions/controllers.registerRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/handlers.registerResponse'
+            $ref: '#/definitions/controllers.registerResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
       summary: Register a user
       tags:
       - authentication
@@ -310,15 +300,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
       security:
       - BearerAuth: []
       summary: List tasks
@@ -333,7 +323,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handlers.taskRequest'
+          $ref: '#/definitions/controllers.taskRequest'
       produces:
       - application/json
       responses:
@@ -344,15 +334,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
       security:
       - BearerAuth: []
       summary: Create a task
@@ -372,23 +362,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.messageResponse'
+            $ref: '#/definitions/controllers.messageResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
       security:
       - BearerAuth: []
       summary: Delete a task
@@ -411,19 +401,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
       security:
       - BearerAuth: []
       summary: Get a task
@@ -443,7 +433,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handlers.taskRequest'
+          $ref: '#/definitions/controllers.taskRequest'
       produces:
       - application/json
       responses:
@@ -454,19 +444,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
       security:
       - BearerAuth: []
       summary: Update a task
@@ -486,23 +476,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.messageResponse'
+            $ref: '#/definitions/controllers.messageResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.errorResponse'
+            $ref: '#/definitions/controllers.errorResponse'
       security:
       - BearerAuth: []
       summary: Complete a task

@@ -1,66 +1,37 @@
-package handlers
+package services
 
 import (
-	"net/http"
+	"context"
+	"errors"
+	"fmt"
 	"sort"
 	"time"
 
-	"study-planner/middleware"
 	"study-planner/models"
+	"study-planner/repositories"
 )
 
-type DayProgress struct {
-	Day          string `json:"day"`
-	Date         string `json:"date"`
-	Completed    int    `json:"completed"`
-	Total        int    `json:"total"`
-	Progress     int    `json:"progress"`
-	StudyMinutes int    `json:"studyMinutes"`
+var (
+	ErrLoadDashboardTasks = errors.New("could not load dashboard")
+	ErrLoadStudyHistory   = errors.New("could not load study completion history")
+)
+
+type DashboardService struct {
+	tasks repositories.TaskRepository
 }
 
-type DashboardResponse struct {
-	TodayDate             string        `json:"todayDate"`
-	TodayProgress         int           `json:"todayProgress"`
-	TodayPlanned          int           `json:"todayPlanned"`
-	TodayCompleted        int           `json:"todayCompleted"`
-	TodayRemaining        int           `json:"todayRemaining"`
-	TotalTasks            int           `json:"totalTasks"`
-	Completed             int           `json:"completed"`
-	Pending               int           `json:"pending"`
-	NotStarted            int           `json:"notStarted"`
-	InProgress            int           `json:"inProgress"`
-	OnHold                int           `json:"onHold"`
-	StudyMinutes          int           `json:"studyMinutes"`
-	Week                  []DayProgress `json:"week"`
-	WeeklyProgress        int           `json:"weeklyProgress"`
-	PreviousWeekProgress  int           `json:"previousWeekProgress"`
-	PreviousWeekAvailable bool          `json:"previousWeekAvailable"`
-	WeekChange            int           `json:"weekChange"`
-	CurrentStreak         int           `json:"currentStreak"`
-	LongestStreak         int           `json:"longestStreak"`
-	LastStudyDate         string        `json:"lastStudyDate"`
+func NewDashboardService(tasks repositories.TaskRepository) *DashboardService {
+	return &DashboardService{tasks: tasks}
 }
 
-// Dashboard summarizes the authenticated user's tasks and weekly progress.
-// @Summary Get dashboard
-// @Tags dashboard
-// @Produce json
-// @Success 200 {object} DashboardResponse
-// @Failure 401 {object} errorResponse
-// @Failure 500 {object} errorResponse
-// @Security BearerAuth
-// @Router /api/dashboard [get]
-func Dashboard(w http.ResponseWriter, r *http.Request) {
-	userID := middleware.UserID(r)
-	var tasks []models.Task
-	if err := DB.WithContext(r.Context()).Where("user_id = ?", userID).Find(&tasks).Error; err != nil {
-		JSONError(w, http.StatusInternalServerError, "Could not load dashboard")
-		return
+func (s *DashboardService) Get(ctx context.Context, userID uint) (models.DashboardResponse, error) {
+	tasks, err := s.tasks.ListForDashboard(ctx, userID)
+	if err != nil {
+		return models.DashboardResponse{}, fmt.Errorf("%w: %v", ErrLoadDashboardTasks, err)
 	}
-	var completions []models.StudyCompletion
-	if err := DB.WithContext(r.Context()).Where("user_id = ?", userID).Find(&completions).Error; err != nil {
-		JSONError(w, http.StatusInternalServerError, "Could not load study completion history")
-		return
+	completions, err := s.tasks.CompletionHistory(ctx, userID)
+	if err != nil {
+		return models.DashboardResponse{}, fmt.Errorf("%w: %v", ErrLoadStudyHistory, err)
 	}
 
 	now := time.Now()
@@ -68,8 +39,8 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 	todayString := today.Format("2006-01-02")
 	weekStart := startOfWeek(today)
 	previousWeekStart := weekStart.AddDate(0, 0, -7)
+	result := models.DashboardResponse{TodayDate: todayString, Week: make([]models.DayProgress, 7)}
 
-	result := DashboardResponse{TodayDate: todayString, Week: make([]DayProgress, 7)}
 	for _, task := range tasks {
 		result.TotalTasks++
 		switch task.Status {
@@ -82,14 +53,12 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 		default:
 			result.NotStarted++
 		}
-
 		if task.Date == todayString {
 			result.TodayPlanned++
 			if task.Status == "Completed" {
 				result.TodayCompleted++
 			}
 		}
-
 		scheduledDate, err := time.ParseInLocation("2006-01-02", task.Date, today.Location())
 		if err == nil && !scheduledDate.Before(previousWeekStart) && scheduledDate.Before(weekStart) {
 			result.PreviousWeekAvailable = true
@@ -97,7 +66,6 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 				result.PreviousWeekProgress++
 			}
 		}
-
 	}
 
 	result.Pending = result.TotalTasks - result.Completed
@@ -112,7 +80,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 	weeklyTotal, weeklyCompleted := 0, 0
 	for i := 0; i < 7; i++ {
 		dayDate := weekStart.AddDate(0, 0, i)
-		day := DayProgress{Day: dayDate.Weekday().String(), Date: dayDate.Format("2006-01-02")}
+		day := models.DayProgress{Day: dayDate.Weekday().String(), Date: dayDate.Format("2006-01-02")}
 		for _, task := range tasks {
 			if task.Date == day.Date {
 				day.Total++
@@ -128,15 +96,9 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 		weeklyCompleted += day.Completed
 		result.Week[i] = day
 	}
+
 	completionDates := make([]time.Time, 0, len(completions))
 	for _, completion := range completions {
-		completedOn := dateOnly(completion.CompletedAt.In(today.Location()))
-		if completedOn.Equal(today) {
-			result.StudyMinutes += completion.ActualStudyMinutes
-		}
-		if !completedOn.Before(weekStart) && completedOn.Before(weekStart.AddDate(0, 0, 7)) {
-			result.Week[calendarDateOffset(completedOn, weekStart)].StudyMinutes += completion.ActualStudyMinutes
-		}
 		completionDates = append(completionDates, completion.CompletedAt)
 	}
 	if weeklyTotal > 0 {
@@ -145,9 +107,8 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 	if result.PreviousWeekAvailable {
 		result.WeekChange = result.WeeklyProgress - result.PreviousWeekProgress
 	}
-
 	result.CurrentStreak, result.LongestStreak, result.LastStudyDate = calculateStreak(completionDates, today)
-	JSONResponse(w, http.StatusOK, result)
+	return result, nil
 }
 
 func dateOnly(value time.Time) time.Time {
@@ -157,14 +118,6 @@ func dateOnly(value time.Time) time.Time {
 
 func startOfWeek(day time.Time) time.Time {
 	return day.AddDate(0, 0, -((int(day.Weekday()) + 6) % 7))
-}
-
-func calendarDateOffset(day, start time.Time) int {
-	y, m, d := day.Date()
-	dayUTC := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
-	y, m, d = start.Date()
-	startUTC := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
-	return int(dayUTC.Sub(startUTC).Hours() / 24)
 }
 
 func countTasksInRange(tasks []models.Task, from, to time.Time) int {

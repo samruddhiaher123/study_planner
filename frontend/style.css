@@ -76,11 +76,10 @@ h2 { margin: 0; font-size: 18px; letter-spacing: -.3px; }
 .panel { padding: 23px 24px; margin-bottom: 18px; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .weekly-chart { min-height: 190px; display: grid; grid-template-columns: repeat(7, 1fr); align-items: end; gap: 14px; padding-top: 8px; }
-.chart-day { display: grid; grid-template-rows: 140px auto auto; justify-items: center; gap: 5px; }
+.chart-day { display: grid; grid-template-rows: 140px auto; justify-items: center; gap: 5px; }
 .chart-track { width: min(44px, 75%); height: 100%; display: flex; align-items: end; border-radius: 7px; background: #f0f1f8; overflow: hidden; }
 .chart-bar { width: 100%; min-height: 3px; border-radius: 7px; background: var(--accent); }
 .chart-label { color: var(--muted); font-size: 12px; }
-.chart-details { color: var(--muted); font-size: 10px; white-space: nowrap; }
 .streak-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .streak-stats article { display: grid; gap: 5px; padding: 14px; border-radius: 9px; background: #f7f8fc; }
 .streak-stats strong { font-size: 22px; }
@@ -167,7 +166,6 @@ h2 { margin: 0; font-size: 18px; letter-spacing: -.3px; }
   .task-actions { justify-content: flex-start; }
   .weekly-chart { gap: 6px; }
   .chart-label { font-size: 10px; }
-  .chart-details { font-size: 8px; }
   .filter-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .calendar-cell { min-height: 82px; padding: 3px; }
   .calendar-task { padding: 3px; font-size: 9px; }

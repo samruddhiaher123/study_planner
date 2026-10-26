@@ -20,7 +20,6 @@ if (taskForm) {
   function resetTaskForm() {
     editingID = null;
     taskForm.reset();
-    taskForm.elements.namedItem("actualStudyMinutes").value = "0";
     document.querySelector("#task-form-title").textContent = "Add a task";
     document.querySelector("#save-task").textContent = "Add task";
     cancelEdit.classList.add("hidden");
@@ -67,7 +66,6 @@ if (taskForm) {
         </h3>
         <p>${escapeHTML(task.subject)} · ${escapeHTML(task.date)} · ${escapeHTML(task.startTime)}–${escapeHTML(task.endTime)}</p>
         <p class="task-description">${escapeHTML(task.description || "")}</p>
-        ${task.actualStudyMinutes ? `<p class="task-description">Recorded study: ${task.actualStudyMinutes} min</p>` : ""}
       </div>
       <div class="task-actions">
         <label class="inline-status">Status<select data-action="status" data-id="${task.id}" aria-label="Update status for ${escapeHTML(task.title)}">
@@ -185,7 +183,6 @@ if (taskForm) {
         endTime: task.endTime,
         status: task.status,
         priority: task.priority,
-        actualStudyMinutes: task.actualStudyMinutes,
       }),
     });
     subjectsLoaded = false;
@@ -196,7 +193,6 @@ if (taskForm) {
     event.preventDefault();
     const form = new FormData(taskForm);
     const body = Object.fromEntries(form.entries());
-    body.actualStudyMinutes = Number(body.actualStudyMinutes || 0);
     try {
       await request(editingID ? `/tasks/${editingID}` : "/tasks", {
         method: editingID ? "PUT" : "POST",
