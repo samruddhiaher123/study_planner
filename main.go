@@ -46,7 +46,7 @@ func main() {
 	}
 	defer sqlDB.Close()
 
-	if err := database.Migrate(db); err != nil {
+	if err := database.BackfillLegacyData(db); err != nil {
 		log.Fatal(err)
 	}
 

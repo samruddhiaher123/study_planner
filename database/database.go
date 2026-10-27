@@ -26,15 +26,7 @@ func Connect(databaseURL string) (*gorm.DB, error) {
 	return db, nil
 }
 
-func Migrate(db *gorm.DB) error {
-	if err := db.AutoMigrate(
-		&models.User{},
-		&models.Task{},
-		&models.StudyCompletion{},
-	); err != nil {
-		return fmt.Errorf("table migration failed: %w", err)
-	}
-
+func BackfillLegacyData(db *gorm.DB) error {
 	return db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&models.Task{}).
 			Where("status IS NULL OR status = ? OR status = ?", "", "Pending").

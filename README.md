@@ -360,15 +360,39 @@ When an existing database has completed tasks with `completed_at` values but no 
 - `models.StudyCompletion` stores owner ID, task ID, and completion time. Its user relationship is not serialized.
 - The subject is currently a task string; there is no separate subject model in this application.
 
-`database.Migrate` uses GORM `AutoMigrate` for `users`, `tasks`, and `study_completions`. It does not drop tables or intentionally delete records. After `AutoMigrate`, a transaction:
+The schema is managed by the versioned SQL files in `migrations/`; the application does not apply schema changes at startup. `database.BackfillLegacyData` still runs a data-only transaction at startup:
 
 1. Changes `NULL`, blank, or legacy `Pending` task statuses to `Not Started`.
 2. Changes `NULL` or blank task priorities to `Medium`.
 3. Copies completed tasks with a recorded completion timestamp into `study_completions` if the matching `(task_id, user_id, completed_at)` row is missing.
 
-The standalone `migrations/000001_create_study_notes_table.*.sql` files are preserved SQL scripts for a `study_notes` table. They are **not** executed by `database.Migrate` or automatically applied on startup.
+The tracked `000001_create_study_notes_table.*.sql` files are retained as the first migration. The `users`, `tasks`, and `study_completions` tables are defined by versions `000002` through `000004`. There is no separate `College` or `Subject` model/table in the current application; task subjects are stored as text in `tasks.subject`.
 
-Before running against a database with existing tables, back up important data and verify schema ownership/permissions. GORM migration may add missing columns/indexes to the three application tables; it does not migrate unrelated `college`, `subjects`, or other existing tables.
+Install the `golang-migrate` CLI (the PostgreSQL driver tag is required):
+
+```bash
+go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.2
+```
+
+Set `DATABASE_URL` to a PostgreSQL connection URL, for example:
+
+```text
+postgres://USER:PASSWORD@HOST:5432/DB_NAME?sslmode=disable
+```
+
+Alternatively, the application builds the URL from `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `DB_SSLMODE`. Apply migrations to a new, empty database with:
+
+```bash
+migrate -path migrations -database "$DATABASE_URL" up
+```
+
+Verify the schema using `\dt`, `\d users`, `\d tasks`, and `\d study_completions` in `psql`; confirm foreign keys, the unique email index, and the two completion-history indexes.
+
+**Existing databases:** do not run `up` until you have backed up the database and checked the existing schema against versions `000002`–`000004`. If those model-backed tables already exist and match, establish the baseline without executing SQL using `migrate -path migrations -database "$DATABASE_URL" force 4`. This also records the existing, non-model `000001` migration as applied; only do so if that is acceptable for this database (for example, `study_notes` already exists or you have explicitly decided to treat that legacy migration as historical). `force` only records a version and bypasses migration execution; it does not validate or alter the schema. If the existing database has only some of the model-backed tables, do not force version `4`; reconcile its schema and migration history deliberately before applying later migrations.
+
+To roll back exactly one migration, use `migrate -path migrations -database "$DATABASE_URL" down 1`. Rollback drops the table created by the latest migration and therefore deletes its data; back up first and use this only when that data may be removed. The application must not be started against a new database until the migrations have been applied.
+
+Do not restore GORM `AutoMigrate` to normal startup after adopting these SQL migrations: that would create a second schema-management path. The startup data backfill normalizes legacy task values and inserts missing completion history; it does not create or alter tables.
 
 ## Frontend behavior
 
@@ -412,5 +436,5 @@ Focused tests cover task query validation/defaults, task ownership and completio
 
 - Study tracking currently records task completion dates and streaks. It does not record actual study duration/minutes or provide a separate study-time endpoint.
 - There is no separate subject CRUD API or subject table managed by this application.
-- The `study_notes` SQL migration is not part of application startup.
+- The legacy `study_notes` SQL migration runs when the full migration directory is applied with `golang-migrate`; it is not applied by application startup and has no corresponding model.
 - CORS currently allows all origins (`Access-Control-Allow-Origin: *`), matching the existing middleware behavior. Review this policy if deploying the frontend/API across origins in a production environment.
