@@ -33,19 +33,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controllers.DashboardResponse"
+                            "$ref": "#/definitions/dto.DashboardResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -71,7 +71,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.loginRequest"
+                            "$ref": "#/definitions/dto.LoginRequest"
                         }
                     }
                 ],
@@ -79,25 +79,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controllers.loginResponse"
+                            "$ref": "#/definitions/dto.AuthResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -123,7 +123,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.registerRequest"
+                            "$ref": "#/definitions/dto.RegisterRequest"
                         }
                     }
                 ],
@@ -131,19 +131,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/controllers.registerResponse"
+                            "$ref": "#/definitions/dto.RegisterResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -225,26 +225,26 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.Task"
+                                "$ref": "#/definitions/dto.TaskResponse"
                             }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -272,7 +272,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.taskRequest"
+                            "$ref": "#/definitions/dto.CreateTaskRequest"
                         }
                     }
                 ],
@@ -280,25 +280,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/models.Task"
+                            "$ref": "#/definitions/dto.TaskResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -331,31 +331,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Task"
+                            "$ref": "#/definitions/dto.TaskResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -390,7 +390,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controllers.taskRequest"
+                            "$ref": "#/definitions/dto.UpdateTaskRequest"
                         }
                     }
                 ],
@@ -398,31 +398,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Task"
+                            "$ref": "#/definitions/dto.TaskResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -453,31 +453,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controllers.messageResponse"
+                            "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -510,31 +510,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controllers.messageResponse"
+                            "$ref": "#/definitions/dto.MessageResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/controllers.errorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -542,7 +542,78 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "controllers.DashboardResponse": {
+        "dto.AuthResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CreateTaskRequest": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "endTime": {
+                    "type": "string"
+                },
+                "priority": {
+                    "type": "string",
+                    "enum": [
+                        "High",
+                        "Medium",
+                        "Low"
+                    ]
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "Not Started",
+                        "In Progress",
+                        "Completed",
+                        "On Hold"
+                    ]
+                },
+                "subject": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.DailyProgressResponse": {
+            "type": "object",
+            "properties": {
+                "completed": {
+                    "type": "integer"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "day": {
+                    "type": "string"
+                },
+                "progress": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.DashboardResponse": {
             "type": "object",
             "properties": {
                 "completed": {
@@ -596,7 +667,7 @@ const docTemplate = `{
                 "week": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.DayProgress"
+                        "$ref": "#/definitions/dto.DailyProgressResponse"
                     }
                 },
                 "weekChange": {
@@ -607,7 +678,7 @@ const docTemplate = `{
                 }
             }
         },
-        "controllers.errorResponse": {
+        "dto.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
@@ -615,7 +686,7 @@ const docTemplate = `{
                 }
             }
         },
-        "controllers.loginRequest": {
+        "dto.LoginRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -626,18 +697,7 @@ const docTemplate = `{
                 }
             }
         },
-        "controllers.loginResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "controllers.messageResponse": {
+        "dto.MessageResponse": {
             "type": "object",
             "properties": {
                 "message": {
@@ -645,7 +705,7 @@ const docTemplate = `{
                 }
             }
         },
-        "controllers.registerRequest": {
+        "dto.RegisterRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -659,7 +719,7 @@ const docTemplate = `{
                 }
             }
         },
-        "controllers.registerResponse": {
+        "dto.RegisterResponse": {
             "type": "object",
             "properties": {
                 "message": {
@@ -667,9 +727,15 @@ const docTemplate = `{
                 }
             }
         },
-        "controllers.taskRequest": {
+        "dto.TaskResponse": {
             "type": "object",
             "properties": {
+                "completedAt": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
                 "date": {
                     "type": "string"
                 },
@@ -678,6 +744,9 @@ const docTemplate = `{
                 },
                 "endTime": {
                     "type": "string"
+                },
+                "id": {
+                    "type": "integer"
                 },
                 "priority": {
                     "type": "string",
@@ -707,35 +776,9 @@ const docTemplate = `{
                 }
             }
         },
-        "models.DayProgress": {
+        "dto.UpdateTaskRequest": {
             "type": "object",
             "properties": {
-                "completed": {
-                    "type": "integer"
-                },
-                "date": {
-                    "type": "string"
-                },
-                "day": {
-                    "type": "string"
-                },
-                "progress": {
-                    "type": "integer"
-                },
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
-        "models.Task": {
-            "type": "object",
-            "properties": {
-                "completedAt": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
                 "date": {
                     "type": "string"
                 },
@@ -744,9 +787,6 @@ const docTemplate = `{
                 },
                 "endTime": {
                     "type": "string"
-                },
-                "id": {
-                    "type": "integer"
                 },
                 "priority": {
                     "type": "string",

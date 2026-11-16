@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -39,7 +38,5 @@ func Auth(next http.Handler) http.Handler {
 }
 
 func writeUnauthorized(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusUnauthorized)
-	json.NewEncoder(w).Encode(map[string]string{"error": "Missing or invalid token"})
+	utils.JSONError(w, http.StatusUnauthorized, "Missing or invalid token")
 }

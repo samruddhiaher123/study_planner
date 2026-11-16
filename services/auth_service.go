@@ -43,7 +43,13 @@ func (s *AuthService) Register(ctx context.Context, name, email, password string
 		return err
 	}
 	user := models.User{Name: name, Email: email, Password: string(hashedPassword)}
-	return s.users.Create(ctx, &user)
+	if err := s.users.Create(ctx, &user); err != nil {
+		if _, lookupErr := s.users.GetByEmail(ctx, email); lookupErr == nil {
+			return ErrEmailExists
+		}
+		return err
+	}
+	return nil
 }
 
 func (s *AuthService) Login(ctx context.Context, email, password string) (string, error) {

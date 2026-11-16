@@ -36,12 +36,17 @@ func ParseToken(tokenString string) (uint, error) {
 	}
 
 	claims := &tokenClaims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		if token.Method != jwt.SigningMethodHS256 {
-			return nil, errors.New("unexpected signing method")
-		}
-		return []byte(secret), nil
-	})
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		claims,
+		func(token *jwt.Token) (interface{}, error) {
+			if token.Method != jwt.SigningMethodHS256 {
+				return nil, errors.New("unexpected signing method")
+			}
+			return []byte(secret), nil
+		},
+		jwt.WithExpirationRequired(),
+	)
 	if err != nil {
 		return 0, err
 	}

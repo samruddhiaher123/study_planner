@@ -71,6 +71,7 @@ func (s *TaskService) Update(ctx context.Context, id, userID uint, input models.
 	}
 
 	addCompletion := task.Status == "Completed" && (!wasCompleted || !hadCompletionTimestamp)
+
 	if err := s.tasks.Update(ctx, &task, addCompletion); err != nil {
 		return models.Task{}, err
 	}
@@ -82,12 +83,15 @@ func (s *TaskService) Complete(ctx context.Context, id, userID uint) error {
 	if err != nil {
 		return err
 	}
+	//task completed if status is "Completed" and CompletedAt is not nil
+
 	wasCompleted := task.Status == "Completed" && task.CompletedAt != nil
 	if !wasCompleted {
 		completedAt := time.Now()
 		task.CompletedAt = &completedAt
 	}
 	task.Status = "Completed"
+
 	return s.tasks.Update(ctx, &task, !wasCompleted)
 }
 

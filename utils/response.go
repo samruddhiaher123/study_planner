@@ -4,25 +4,28 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"net/http"
+
+	"study-planner/dto"
 )
 
 const maxJSONBodySize = 1 << 20
 
-type errorResponse struct {
-	Error string `json:"error"`
-}
-
 func JSONError(w http.ResponseWriter, status int, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(errorResponse{Error: message})
+	writeJSON(w, status, dto.ErrorResponse{Error: message})
 }
 
 func JSONResponse(w http.ResponseWriter, status int, value interface{}) {
+	writeJSON(w, status, value)
+}
+
+func writeJSON(w http.ResponseWriter, status int, value interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(value)
+	if err := json.NewEncoder(w).Encode(value); err != nil {
+		log.Printf("Could not encode JSON response: %v", err)
+	}
 }
 
 func DecodeJSON(w http.ResponseWriter, r *http.Request, value interface{}) bool {

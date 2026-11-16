@@ -25,13 +25,14 @@ Study Planner is a Go web application for managing study tasks. It uses Gorilla 
 study_planner/
 ├── main.go                 # Startup and dependency wiring
 ├── config/                 # Environment configuration
-├── database/               # PostgreSQL connection and GORM migration
+├── database/               # PostgreSQL connection and legacy-data backfill
 ├── controllers/            # HTTP input/output, validation, status mapping
+├── dto/                    # API request and response types
 ├── repositories/           # GORM queries and persistence
 ├── services/               # Authentication, task, and dashboard logic
 ├── routes/                 # Gorilla Mux endpoints, Swagger, static files
 ├── middleware/             # JWT authentication and CORS
-├── models/                 # Database entities and API data structures
+├── models/                 # Database entities and task input/filter types
 ├── utils/                  # JWT and JSON HTTP helpers
 ├── migrations/             # Standalone SQL files (not run at startup)
 ├── docs/                   # Generated Swagger/OpenAPI artifacts
@@ -45,7 +46,8 @@ study_planner/
 - **Controllers** decode HTTP requests, validate request/query data, call services, and produce JSON responses with the established HTTP status codes.
 - **Services** implement application behavior such as account registration, password verification, task completion, and dashboard calculations.
 - **Repositories** perform database reads and writes. Task queries and ownership restrictions are enforced here as well as by service use of the authenticated user ID.
-- **Models** define GORM entities and API request/filter/response structures.
+- **DTOs** define JSON requests and responses and map database models to API-safe output. User password hashes and task ownership IDs are not included in response DTOs.
+- **Models** define GORM entities and internal task input/filter types.
 - **Routes** connect endpoints to controllers and install middleware.
 - **Middleware** validates bearer JWTs, stores the authenticated user ID in request context, and handles CORS.
 - **Config** reads environment variables. **Database** opens PostgreSQL and performs startup migration/backfill work.
@@ -61,9 +63,11 @@ GORM database
 Controllers → routes.New() → HTTP server
 ```
 
+Controllers decode request DTOs, pass application inputs to services, and map service/model results into response DTOs. This keeps JSON formats independent from GORM entity fields.
+
 ## Technology and prerequisites
 
-- Go 1.22 or newer
+- Go 1.26 or newer, as required by `go.mod`
 - PostgreSQL
 - Dependencies listed in `go.mod`
 
@@ -116,13 +120,13 @@ CREATE USER study_planner_app WITH PASSWORD 'replace_with_a_local_password';
 GRANT CONNECT ON DATABASE study_planner TO study_planner_app;
 ```
 
-Connect to `study_planner` as its owner/administrator and grant schema permissions needed for GORM's initial table creation and subsequent migrations:
+Connect to `study_planner` as its owner/administrator and grant the database role the schema and table permissions required by your deployment and migration process. The application does not create tables at startup.
 
 ```sql
 GRANT USAGE, CREATE ON SCHEMA public TO study_planner_app;
 ```
 
-The role used for startup must have sufficient ownership/alteration rights for the tables GORM migrates. After the tables exist, runtime data access also requires table and sequence privileges. Coordinate these grants with your database administrator and existing ownership model; do not grant broad superuser access to the application.
+Coordinate privileges with your database administrator and existing ownership model; do not grant broad superuser access to the application.
 
 From the repository root:
 
@@ -138,11 +142,11 @@ Startup order:
 1. Load `.env` and read application configuration.
 2. Require `JWT_SECRET`.
 3. Open and ping PostgreSQL.
-4. Run `database.Migrate` to create/update the application models and apply legacy task data backfills.
+4. Run the legacy task-data backfill transaction.
 5. Construct the GORM repositories, services, and controllers and inject them into the router.
-6. Start the HTTP server.
+6. Start the HTTP server with bounded header/body read timeouts and an idle connection timeout.
 
-The server exits with a logged error if configuration, database connection, or migration startup fails.
+The SQL files in `migrations/` are not run by application startup. Apply them separately to initialize or update a database. The server exits with a logged error if configuration, database connection, or the data backfill fails.
 
 ## Application architecture
 
@@ -153,13 +157,14 @@ HTTP request
   → CORS middleware
   → Gorilla Mux route
   → JWT middleware (protected API routes only)
-  → controller
+  → controller (request DTO)
   → service
   → repository
   → PostgreSQL through GORM
+  → response DTO
 ```
 
-The response returns from the repository/service to the controller, which writes JSON and the appropriate HTTP status. `frontend/common.js` parses the response and reports non-success responses to the page.
+The response returns from the repository/service to the controller, which maps it to a response DTO and writes JSON with the appropriate HTTP status. `frontend/common.js` parses the response and reports non-success responses to the page.
 
 ### Authentication and authorization
 
@@ -360,13 +365,13 @@ When an existing database has completed tasks with `completed_at` values but no 
 - `models.StudyCompletion` stores owner ID, task ID, and completion time. Its user relationship is not serialized.
 - The subject is currently a task string; there is no separate subject model in this application.
 
-The schema is managed by the versioned SQL files in `migrations/`; the application does not apply schema changes at startup. `database.BackfillLegacyData` still runs a data-only transaction at startup:
+The schema is managed by the versioned SQL files in `migrations/`; the application does not apply schema changes at startup. The current migration sequence creates users, tasks, and study completion tables, then adds a legacy `phone_no` column to study completions. The current model does not read or write `phone_no`; keep the migration in the sequence for databases where it has already been applied. `database.BackfillLegacyData` runs a data-only transaction at startup:
 
 1. Changes `NULL`, blank, or legacy `Pending` task statuses to `Not Started`.
 2. Changes `NULL` or blank task priorities to `Medium`.
 3. Copies completed tasks with a recorded completion timestamp into `study_completions` if the matching `(task_id, user_id, completed_at)` row is missing.
 
-The tracked `000001_create_study_notes_table.*.sql` files are retained as the first migration. The `users`, `tasks`, and `study_completions` tables are defined by versions `000002` through `000004`. There is no separate `College` or `Subject` model/table in the current application; task subjects are stored as text in `tasks.subject`.
+The migration files currently use versions `000001` through `000004`: users, tasks, study completions, and the legacy `phone_no` column, respectively. There is no separate `Subject` model/table or subject CRUD API; task subjects are stored as text in `tasks.subject`.
 
 Install the `golang-migrate` CLI (the PostgreSQL driver tag is required):
 
@@ -388,9 +393,9 @@ migrate -path migrations -database "$DATABASE_URL" up
 
 Verify the schema using `\dt`, `\d users`, `\d tasks`, and `\d study_completions` in `psql`; confirm foreign keys, the unique email index, and the two completion-history indexes.
 
-**Existing databases:** do not run `up` until you have backed up the database and checked the existing schema against versions `000002`–`000004`. If those model-backed tables already exist and match, establish the baseline without executing SQL using `migrate -path migrations -database "$DATABASE_URL" force 4`. This also records the existing, non-model `000001` migration as applied; only do so if that is acceptable for this database (for example, `study_notes` already exists or you have explicitly decided to treat that legacy migration as historical). `force` only records a version and bypasses migration execution; it does not validate or alter the schema. If the existing database has only some of the model-backed tables, do not force version `4`; reconcile its schema and migration history deliberately before applying later migrations.
+**Existing databases:** do not run `up` until you have backed up the database and compared its schema and migration history with all four SQL files. `force` only records a migration version; it does not validate or alter the schema. Use it only after confirming the database already has the exact schema represented by that version, including `phone_no` at version `4`. Reconcile partially migrated schemas deliberately before applying later migrations.
 
-To roll back exactly one migration, use `migrate -path migrations -database "$DATABASE_URL" down 1`. Rollback drops the table created by the latest migration and therefore deletes its data; back up first and use this only when that data may be removed. The application must not be started against a new database until the migrations have been applied.
+To roll back exactly one migration, use `migrate -path migrations -database "$DATABASE_URL" down 1`. At version `4`, rollback removes the legacy `phone_no` column; rolling back earlier versions drops tables and deletes their data. Back up first and use rollback only when the corresponding schema/data change is intended. The application must not be started against a new database until the migrations have been applied.
 
 Do not restore GORM `AutoMigrate` to normal startup after adopting these SQL migrations: that would create a second schema-management path. The startup data backfill normalizes legacy task values and inserts missing completion history; it does not create or alter tables.
 
@@ -430,11 +435,10 @@ go vet ./...
 go build ./...
 ```
 
-Focused tests cover task query validation/defaults, task ownership and completion behavior, authentication hashing/JWT issuance, dashboard calculations, and protected-route behavior. PostgreSQL-dependent endpoint workflows should be tested against a dedicated test database; avoid using a real user database for tests that create/update/delete records.
+DTO tests verify that model-only fields are omitted from API responses, and a dashboard test verifies the existing flat JSON response shape. PostgreSQL-dependent endpoint workflows should be tested against a dedicated test database; avoid using a real user database for tests that create/update/delete records.
 
 ## Current scope and limitations
 
 - Study tracking currently records task completion dates and streaks. It does not record actual study duration/minutes or provide a separate study-time endpoint.
 - There is no separate subject CRUD API or subject table managed by this application.
-- The legacy `study_notes` SQL migration runs when the full migration directory is applied with `golang-migrate`; it is not applied by application startup and has no corresponding model.
 - CORS currently allows all origins (`Access-Control-Allow-Origin: *`), matching the existing middleware behavior. Review this policy if deploying the frontend/API across origins in a production environment.

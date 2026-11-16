@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"study-planner/config"
 	"study-planner/controllers"
@@ -35,7 +36,7 @@ func main() {
 	if cfg.JWTSecret == "" {
 		log.Fatal("JWT_SECRET is empty; set it in .env before starting the server")
 	}
-
+	//db connection
 	db, err := database.Connect(cfg.DatabaseURL)
 	if err != nil {
 		log.Fatal(err)
@@ -64,5 +65,12 @@ func main() {
 
 	log.Printf("Swagger UI: http://localhost:8080/swagger/index.html")
 	log.Printf("Server running on %s", cfg.HTTPAddress)
-	log.Fatal(http.ListenAndServe(cfg.HTTPAddress, router))
+	server := &http.Server{
+		Addr:              cfg.HTTPAddress,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	log.Fatal(server.ListenAndServe())
 }

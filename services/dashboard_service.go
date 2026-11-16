@@ -24,14 +24,14 @@ func NewDashboardService(tasks repositories.TaskRepository) *DashboardService {
 	return &DashboardService{tasks: tasks}
 }
 
-func (s *DashboardService) Get(ctx context.Context, userID uint) (models.DashboardResponse, error) {
+func (s *DashboardService) Get(ctx context.Context, userID uint) (DashboardData, error) {
 	tasks, err := s.tasks.ListForDashboard(ctx, userID)
 	if err != nil {
-		return models.DashboardResponse{}, fmt.Errorf("%w: %v", ErrLoadDashboardTasks, err)
+		return DashboardData{}, fmt.Errorf("%w: %w", ErrLoadDashboardTasks, err)
 	}
 	completions, err := s.tasks.CompletionHistory(ctx, userID)
 	if err != nil {
-		return models.DashboardResponse{}, fmt.Errorf("%w: %v", ErrLoadStudyHistory, err)
+		return DashboardData{}, fmt.Errorf("%w: %w", ErrLoadStudyHistory, err)
 	}
 
 	now := time.Now()
@@ -39,7 +39,7 @@ func (s *DashboardService) Get(ctx context.Context, userID uint) (models.Dashboa
 	todayString := today.Format("2006-01-02")
 	weekStart := startOfWeek(today)
 	previousWeekStart := weekStart.AddDate(0, 0, -7)
-	result := models.DashboardResponse{TodayDate: todayString, Week: make([]models.DayProgress, 7)}
+	result := DashboardData{TodayDate: todayString, Week: make([]DayProgress, 7)}
 
 	for _, task := range tasks {
 		result.TotalTasks++
@@ -80,7 +80,7 @@ func (s *DashboardService) Get(ctx context.Context, userID uint) (models.Dashboa
 	weeklyTotal, weeklyCompleted := 0, 0
 	for i := 0; i < 7; i++ {
 		dayDate := weekStart.AddDate(0, 0, i)
-		day := models.DayProgress{Day: dayDate.Weekday().String(), Date: dayDate.Format("2006-01-02")}
+		day := DayProgress{Day: dayDate.Weekday().String(), Date: dayDate.Format("2006-01-02")}
 		for _, task := range tasks {
 			if task.Date == day.Date {
 				day.Total++
