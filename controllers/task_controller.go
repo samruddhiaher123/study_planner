@@ -42,6 +42,10 @@ func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	}
 	task, err := h.service.Create(r.Context(), middleware.UserID(r), input.ToTaskInput())
 	if err != nil {
+		if errors.Is(err, services.ErrInvalidTaskStatus) || errors.Is(err, services.ErrInvalidPriority) {
+			utils.JSONError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		utils.JSONError(w, http.StatusInternalServerError, "Could not create task")
 		return
 	}
@@ -147,7 +151,9 @@ func (h *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 		validatedInput.ToTaskInput(),
 	)
 	if err != nil {
-		if errors.Is(err, services.ErrTaskNotFound) {
+		if errors.Is(err, services.ErrInvalidTaskStatus) || errors.Is(err, services.ErrInvalidPriority) {
+			utils.JSONError(w, http.StatusBadRequest, err.Error())
+		} else if errors.Is(err, services.ErrTaskNotFound) {
 			utils.JSONError(w, http.StatusNotFound, "Task not found")
 		} else {
 			utils.JSONError(w, http.StatusInternalServerError, "Could not update task")

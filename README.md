@@ -25,7 +25,7 @@ Study Planner is a Go web application for managing study tasks. It uses Gorilla 
 study_planner/
 ├── main.go                 # Startup and dependency wiring
 ├── config/                 # Environment configuration
-├── database/               # PostgreSQL connection and legacy-data backfill
+├── database/               # PostgreSQL connection
 ├── controllers/            # HTTP input/output, validation, status mapping
 ├── dto/                    # API request and response types
 ├── repositories/           # GORM queries and persistence
@@ -50,7 +50,7 @@ study_planner/
 - **Models** define GORM entities and internal task input/filter types.
 - **Routes** connect endpoints to controllers and install middleware.
 - **Middleware** validates bearer JWTs, stores the authenticated user ID in request context, and handles CORS.
-- **Config** reads environment variables. **Database** opens PostgreSQL and performs startup migration/backfill work.
+- **Config** reads environment variables. **Database** opens and verifies the PostgreSQL connection.
 - **Utils** contains shared JSON helpers and JWT functions.
 
 The dependency flow is constructed in `main.go`:
@@ -142,11 +142,10 @@ Startup order:
 1. Load `.env` and read application configuration.
 2. Require `JWT_SECRET`.
 3. Open and ping PostgreSQL.
-4. Run the legacy task-data backfill transaction.
-5. Construct the GORM repositories, services, and controllers and inject them into the router.
-6. Start the HTTP server with bounded header/body read timeouts and an idle connection timeout.
+4. Construct the GORM repositories, services, and controllers and inject them into the router.
+5. Start the HTTP server with bounded header/body read timeouts and an idle connection timeout.
 
-The SQL files in `migrations/` are not run by application startup. Apply them separately to initialize or update a database. The server exits with a logged error if configuration, database connection, or the data backfill fails.
+The SQL files in `migrations/` are not run by application startup. Apply them separately to initialize or update a database. The server exits with a logged error if configuration or database connection fails.
 
 ## Application architecture
 
@@ -356,7 +355,7 @@ Successful task-list responses include `X-Server-Date` in `YYYY-MM-DD` format fo
 
 `models.StudyCompletion` stores a user's task ID and completion timestamp. Creating a task already marked complete, transitioning a task to complete, or calling the completion endpoint records history alongside the task write in a transaction. The dashboard uses these records to compute the latest study date and consecutive-day streaks.
 
-When an existing database has completed tasks with `completed_at` values but no matching history record, the startup migration inserts the missing history record. It does not invent completion timestamps.
+Completion history is recorded transactionally for task completions made through the current application. Startup does not backfill history for older completed tasks, or normalize existing task rows; repair those records separately if migrating a database that contains legacy or incomplete data.
 
 ## Database models and migration behavior
 
@@ -397,7 +396,7 @@ Verify the schema using `\dt`, `\d users`, `\d tasks`, and `\d study_completions
 
 To roll back exactly one migration, use `migrate -path migrations -database "$DATABASE_URL" down 1`. At version `4`, rollback removes the legacy `phone_no` column; rolling back earlier versions drops tables and deletes their data. Back up first and use rollback only when the corresponding schema/data change is intended. The application must not be started against a new database until the migrations have been applied.
 
-Do not restore GORM `AutoMigrate` to normal startup after adopting these SQL migrations: that would create a second schema-management path. The startup data backfill normalizes legacy task values and inserts missing completion history; it does not create or alter tables.
+Do not restore GORM `AutoMigrate` to normal startup after adopting these SQL migrations: that would create a second schema-management path. Existing databases that need data cleanup or missing completion-history records require a deliberate, separately managed data migration; normal startup does not alter existing rows.
 
 ## Frontend behavior
 

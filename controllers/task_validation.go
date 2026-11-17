@@ -26,12 +26,12 @@ func parseTaskFilter(r *http.Request) (models.TaskFilter, error) {
 		Sort:     params.Get("sort"),
 	}
 	if filter.Status == "Pending" {
-		filter.Status = "Not Started"
+		filter.Status = string(models.TaskNotStarted)
 	}
-	if filter.Status != "" && !validTaskStatus(filter.Status) {
+	if filter.Status != "" && !models.TaskStatus(filter.Status).IsValid() {
 		return models.TaskFilter{}, fmt.Errorf("Invalid status filter")
 	}
-	if filter.Priority != "" && filter.Priority != "High" && filter.Priority != "Medium" && filter.Priority != "Low" {
+	if filter.Priority != "" && !models.TaskPriority(filter.Priority).IsValid() {
 		return models.TaskFilter{}, fmt.Errorf("Invalid priority filter")
 	}
 	//for date must be into date-m-y format
@@ -60,10 +60,6 @@ func parseTaskFilter(r *http.Request) (models.TaskFilter, error) {
 	return filter.ToTaskFilter(), nil
 }
 
-func validTaskStatus(status string) bool {
-	return status == "Not Started" || status == "In Progress" || status == "Completed" || status == "On Hold"
-}
-
 func validateTask(input *dto.CreateTaskRequest) string {
 	input.Title = strings.TrimSpace(input.Title)
 	input.Subject = strings.TrimSpace(input.Subject)
@@ -85,16 +81,16 @@ func validateTask(input *dto.CreateTaskRequest) string {
 		return "End time must use HH:MM and be later than start time"
 	}
 	if input.Status == "" || input.Status == "Pending" {
-		input.Status = "Not Started"
+		input.Status = string(models.TaskNotStarted)
 	}
-	if !validTaskStatus(input.Status) {
+	if !models.TaskStatus(input.Status).IsValid() {
 		return "Status must be Not Started, In Progress, Completed, or On Hold"
 	}
 	if input.Priority == nil || *input.Priority == "" {
-		defaultPriority := "Medium"
+		defaultPriority := string(models.PriorityMedium)
 		input.Priority = &defaultPriority
 	}
-	if *input.Priority != "High" && *input.Priority != "Medium" && *input.Priority != "Low" {
+	if !models.TaskPriority(*input.Priority).IsValid() {
 		return "Priority must be High, Medium, or Low"
 	}
 	return ""

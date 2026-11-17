@@ -7,8 +7,8 @@ type TaskInput struct {
 	Date        string
 	StartTime   string
 	EndTime     string
-	Status      string
-	Priority    *string
+	Status      TaskStatus
+	Priority    *TaskPriority
 }
 
 type TaskFilter struct {

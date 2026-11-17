@@ -11,7 +11,11 @@ import (
 	"gorm.io/gorm"
 )
 
-var ErrTaskNotFound = errors.New("task not found")
+var (
+	ErrTaskNotFound      = errors.New("task not found")
+	ErrInvalidTaskStatus = errors.New("status must be Not Started, In Progress, Completed, or On Hold")
+	ErrInvalidPriority   = errors.New("priority must be High, Medium, or Low")
+)
 
 type TaskService struct {
 	tasks repositories.TaskRepository
@@ -22,8 +26,21 @@ func NewTaskService(tasks repositories.TaskRepository) *TaskService {
 }
 
 func (s *TaskService) Create(ctx context.Context, userID uint, input models.TaskInput) (models.Task, error) {
+	if input.Status == "" {
+		input.Status = models.TaskNotStarted
+	}
+	if !input.Status.IsValid() {
+		return models.Task{}, ErrInvalidTaskStatus
+	}
+	if input.Priority == nil || *input.Priority == "" {
+		priority := models.PriorityMedium
+		input.Priority = &priority
+	} else if !input.Priority.IsValid() {
+		return models.Task{}, ErrInvalidPriority
+	}
+
 	task := taskFromInput(userID, input)
-	if task.Status == "Completed" {
+	if task.Status == models.TaskCompleted {
 		completedAt := time.Now()
 		task.CompletedAt = &completedAt
 	}
@@ -46,12 +63,22 @@ func (s *TaskService) Get(ctx context.Context, id, userID uint) (models.Task, er
 }
 
 func (s *TaskService) Update(ctx context.Context, id, userID uint, input models.TaskInput) (models.Task, error) {
+	if input.Status == "" {
+		input.Status = models.TaskNotStarted
+	}
+	if !input.Status.IsValid() {
+		return models.Task{}, ErrInvalidTaskStatus
+	}
+	if input.Priority != nil && *input.Priority != "" && !input.Priority.IsValid() {
+		return models.Task{}, ErrInvalidPriority
+	}
+
 	task, err := s.Get(ctx, id, userID)
 	if err != nil {
 		return models.Task{}, err
 	}
 
-	wasCompleted := task.Status == "Completed"
+	wasCompleted := task.Status == models.TaskCompleted
 	hadCompletionTimestamp := task.CompletedAt != nil
 	task.Title = input.Title
 	task.Subject = input.Subject
@@ -63,14 +90,14 @@ func (s *TaskService) Update(ctx context.Context, id, userID uint, input models.
 	if input.Priority != nil && *input.Priority != "" {
 		task.Priority = *input.Priority
 	}
-	if task.Status == "Completed" && task.CompletedAt == nil {
+	if task.Status == models.TaskCompleted && task.CompletedAt == nil {
 		completedAt := time.Now()
 		task.CompletedAt = &completedAt
-	} else if task.Status != "Completed" {
+	} else if task.Status != models.TaskCompleted {
 		task.CompletedAt = nil
 	}
 
-	addCompletion := task.Status == "Completed" && (!wasCompleted || !hadCompletionTimestamp)
+	addCompletion := task.Status == models.TaskCompleted && (!wasCompleted || !hadCompletionTimestamp)
 
 	if err := s.tasks.Update(ctx, &task, addCompletion); err != nil {
 		return models.Task{}, err
@@ -85,12 +112,12 @@ func (s *TaskService) Complete(ctx context.Context, id, userID uint) error {
 	}
 	//task completed if status is "Completed" and CompletedAt is not nil
 
-	wasCompleted := task.Status == "Completed" && task.CompletedAt != nil
+	wasCompleted := task.Status == models.TaskCompleted && task.CompletedAt != nil
 	if !wasCompleted {
 		completedAt := time.Now()
 		task.CompletedAt = &completedAt
 	}
-	task.Status = "Completed"
+	task.Status = models.TaskCompleted
 
 	return s.tasks.Update(ctx, &task, !wasCompleted)
 }
@@ -107,7 +134,7 @@ func (s *TaskService) Delete(ctx context.Context, id, userID uint) error {
 }
 
 func taskFromInput(userID uint, input models.TaskInput) models.Task {
-	priority := "Medium"
+	priority := models.PriorityMedium
 	if input.Priority != nil && *input.Priority != "" {
 		priority = *input.Priority
 	}

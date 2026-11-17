@@ -47,10 +47,6 @@ func main() {
 	}
 	defer sqlDB.Close()
 
-	if err := database.BackfillLegacyData(db); err != nil {
-		log.Fatal(err)
-	}
-
 	userRepository := repositories.NewGormUserRepository(db)
 	taskRepository := repositories.NewGormTaskRepository(db)
 	authService := services.NewAuthService(userRepository)

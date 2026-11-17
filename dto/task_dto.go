@@ -50,6 +50,11 @@ type MessageResponse struct {
 }
 
 func (input CreateTaskRequest) ToTaskInput() models.TaskInput {
+	var priority *models.TaskPriority
+	if input.Priority != nil {
+		value := models.TaskPriority(*input.Priority)
+		priority = &value
+	}
 	return models.TaskInput{
 		Title:       input.Title,
 		Subject:     input.Subject,
@@ -57,8 +62,8 @@ func (input CreateTaskRequest) ToTaskInput() models.TaskInput {
 		Date:        input.Date,
 		StartTime:   input.StartTime,
 		EndTime:     input.EndTime,
-		Status:      input.Status,
-		Priority:    input.Priority,
+		Status:      models.TaskStatus(input.Status),
+		Priority:    priority,
 	}
 }
 
@@ -89,8 +94,8 @@ func TaskResponseFromModel(task models.Task) TaskResponse {
 		Date:        task.Date,
 		StartTime:   task.StartTime,
 		EndTime:     task.EndTime,
-		Status:      task.Status,
-		Priority:    task.Priority,
+		Status:      string(task.Status),
+		Priority:    string(task.Priority),
 		CompletedAt: task.CompletedAt,
 		CreatedAt:   task.CreatedAt,
 	}

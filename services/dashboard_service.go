@@ -44,25 +44,25 @@ func (s *DashboardService) Get(ctx context.Context, userID uint) (DashboardData,
 	for _, task := range tasks {
 		result.TotalTasks++
 		switch task.Status {
-		case "Completed":
+		case models.TaskCompleted:
 			result.Completed++
-		case "In Progress":
+		case models.TaskInProgress:
 			result.InProgress++
-		case "On Hold":
+		case models.TaskOnHold:
 			result.OnHold++
 		default:
 			result.NotStarted++
 		}
 		if task.Date == todayString {
 			result.TodayPlanned++
-			if task.Status == "Completed" {
+			if task.Status == models.TaskCompleted {
 				result.TodayCompleted++
 			}
 		}
 		scheduledDate, err := time.ParseInLocation("2006-01-02", task.Date, today.Location())
 		if err == nil && !scheduledDate.Before(previousWeekStart) && scheduledDate.Before(weekStart) {
 			result.PreviousWeekAvailable = true
-			if task.Status == "Completed" {
+			if task.Status == models.TaskCompleted {
 				result.PreviousWeekProgress++
 			}
 		}
@@ -84,7 +84,7 @@ func (s *DashboardService) Get(ctx context.Context, userID uint) (DashboardData,
 		for _, task := range tasks {
 			if task.Date == day.Date {
 				day.Total++
-				if task.Status == "Completed" {
+				if task.Status == models.TaskCompleted {
 					day.Completed++
 				}
 			}
